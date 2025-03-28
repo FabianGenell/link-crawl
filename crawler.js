@@ -15,15 +15,16 @@ class WebsiteCrawler {
         this.maxConcurrent = config.maxConcurrent ?? 5;
         this.maxDepth = config.maxDepth ?? 3;
         this.statesDir = config.statesDir ?? './states';
-        this.outputFile = config.outputFile ?? 'results.csv';
+        this.resultsDir = config.resultsDir ?? './results';
         this.robots = null;
         this.isCrawling = false;
         this.foundUrls = new Set();
     }
 
     async initialize() {
-        // Create states directory if it doesn't exist
+        // Create states and results directories if they don't exist
         await fsPromises.mkdir(this.statesDir, { recursive: true });
+        await fsPromises.mkdir(this.resultsDir, { recursive: true });
 
         // Load target URLs from CSV
         await this.loadTargetUrls();
@@ -36,6 +37,8 @@ class WebsiteCrawler {
         await this.loadState();
 
         // Initialize CSV writer
+        const safeUrl = this.baseUrl.toString().replace(/[^a-zA-Z0-9]/g, '_');
+        this.outputFile = `${this.resultsDir}/${safeUrl}.csv`;
         this.csvWriter = createObjectCsvWriter({
             path: this.outputFile,
             header: [
@@ -53,7 +56,7 @@ class WebsiteCrawler {
 
     async loadTargetUrls() {
         const parser = fs
-            .createReadStream('target-urls.csv')
+            .createReadStream('hreflang-errors.csv')
             .pipe(parse({ columns: true, skip_empty_lines: true }));
 
         for await (const record of parser) {
@@ -130,7 +133,7 @@ class WebsiteCrawler {
     }
 
     async saveResults() {
-        console.log('Saving results to CSV...');
+        console.log(`Saving results to ${this.outputFile}...`);
         await this.csvWriter.writeRecords(this.results);
         console.log(`Current results: ${this.results.length} matches`);
     }
@@ -285,7 +288,7 @@ const crawler = new WebsiteCrawler({
     maxConcurrent: 5,
     maxDepth: 3,
     statesDir: './states',
-    outputFile: 'results.csv'
+    resultsDir: './results'
 });
 
 crawler.start().catch(console.error);
