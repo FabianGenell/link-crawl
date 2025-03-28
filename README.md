@@ -16,6 +16,9 @@ A Node.js script that crawls a target website and checks which pages contain lin
 - Configurable crawl depth limit
 - Link normalization
 - Graceful handling of redirects and broken links
+- Stops automatically when all target URLs are found
+- Saves results after each find
+- Separate state and results files per website
 
 ## Installation
 
@@ -40,31 +43,41 @@ const crawler = new WebsiteCrawler({
     baseUrl: 'https://your-target-website.com',
     maxConcurrent: 5,  // Number of concurrent requests
     maxDepth: 3,       // Maximum crawl depth
-    stateFile: 'crawler-state.json',
-    outputFile: 'results.csv'
+    statesDir: './states',  // Directory for state files
+    resultsDir: './results' // Directory for result files
 });
 ```
 
 3. Run the crawler:
 ```bash
-node crawler.js
+npm start
 ```
 
 ## Output
 
-The crawler generates two files:
-- `results.csv`: Contains the found links with columns:
+The crawler generates files in two directories:
+
+### States Directory (`./states/`)
+- Contains state files for each website (e.g., `https___example_com.json`)
+- State files include:
+  - Visited URLs
+  - Current queue
+  - Found results
+- Allows resuming interrupted crawls
+
+### Results Directory (`./results/`)
+- Contains CSV files for each website (e.g., `https___example_com.csv`)
+- CSV files include columns:
   - Target URL: The URL from your input CSV
   - Found On: The page where the link was found
-- `crawler-state.json`: Contains the crawler's state for resuming interrupted crawls
 
 ## Configuration Options
 
 - `baseUrl`: The website to crawl (required)
 - `maxConcurrent`: Maximum number of concurrent requests (default: 5)
 - `maxDepth`: Maximum crawl depth (default: 3)
-- `stateFile`: File to save crawler state (default: 'crawler-state.json')
-- `outputFile`: File to save results (default: 'results.csv')
+- `statesDir`: Directory for state files (default: './states')
+- `resultsDir`: Directory for result files (default: './results')
 
 ## Notes
 
@@ -72,4 +85,8 @@ The crawler generates two files:
 - It only crawls pages within the same domain
 - Random delays (200ms-1s) are added between requests
 - The crawler can be stopped and resumed at any time
-- URLs are normalized (query parameters and hash fragments are removed) 
+- URLs are normalized (query parameters and hash fragments are removed)
+- Results are saved immediately after finding each target URL
+- Crawling stops automatically when all target URLs are found
+- Each website gets its own state and results files
+- State and results directories are automatically created if they don't exist 
